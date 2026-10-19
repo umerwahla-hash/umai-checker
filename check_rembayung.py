@@ -163,6 +163,12 @@ async def fetch_slots(page, date, day_name):
     await page.goto(url, wait_until="domcontentloaded")
     await wait_for_waiting_room(page)
 
+    # The queue can send us back without our query string; re-request once we're through.
+    if f"party_size={PARTY_SIZE}" not in page.url:
+        print(f"  Query string lost after waiting room (landed on {page.url}); reloading.")
+        await page.goto(url, wait_until="domcontentloaded")
+        await wait_for_waiting_room(page)
+
     frame = await get_widget_frame(page)
 
     # The form must show our party size and date, otherwise results are for the wrong query.
@@ -173,7 +179,12 @@ async def fetch_slots(page, date, day_name):
             break
         await page.wait_for_timeout(1000)
     else:
-        raise RuntimeError(f"Widget did not load for {PARTY_SIZE} people on {expected_date}.")
+        snippet = " ".join(text.split())[:300]
+        raise RuntimeError(
+            f"Widget did not load for {PARTY_SIZE} people on {expected_date}. "
+            f"page.url={page.url} title={await page.title()!r} frame.url={frame.url[:90]} "
+            f"frame text: {snippet!r}"
+        )
 
     # Let the slot list finish rendering after the form appears.
     await page.wait_for_timeout(3000)
