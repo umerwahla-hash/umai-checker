@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 import smtplib
+import sys
 from email.message import EmailMessage
 from datetime import datetime, timedelta
 from playwright.async_api import async_playwright
@@ -113,6 +114,7 @@ async def check_availability():
                 
         except Exception as e:
             print(f"Script Error: {e}")
+            sys.exit(1)
             
         finally:
             await browser.close()
