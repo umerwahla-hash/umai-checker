@@ -38,8 +38,8 @@ def is_within_time_window(day_name, time_str):
     return False
 
 def send_email_alert(subject, body, attachment_path):
-    sender_email = os.environ.get("umerwahla@gmail.com")
-    sender_password = os.environ.get("cgoh jprq itrv fbzv")
+    sender_email = os.environ.get("SENDER_EMAIL")
+    sender_password = os.environ.get("SENDER_PASSWORD")
 
     if not sender_email or not sender_password:
         print("❌ Email credentials not found in environment variables. Cannot send email.")
