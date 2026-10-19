@@ -23,6 +23,9 @@ WAITING_ROOM_TIMEOUT_S = 8 * 60
 # Slots under a heading containing one of these words are not dine-in tables
 EXCLUDED_SECTION_WORDS = ("takeaway",)
 
+# Browser console errors / failed requests, shown if the widget fails to load
+DIAG_LOG = []
+
 # Walks the widget's text in document order. The most recent non-button text
 # before a time is treated as that slot's section heading.
 EXTRACT_SLOTS_JS = r"""
@@ -180,6 +183,12 @@ async def fetch_slots(page, date, day_name):
         await page.wait_for_timeout(1000)
     else:
         snippet = " ".join(text.split())[:300]
+        try:
+            print(f"  frame html: {(await frame.content())[:600]!r}")
+        except Exception as e:
+            print(f"  frame html unavailable: {e}")
+        for line in DIAG_LOG[-25:]:
+            print(f"  diag: {line}")
         raise RuntimeError(
             f"Widget did not load for {PARTY_SIZE} people on {expected_date}. "
             f"page.url={page.url} title={await page.title()!r} frame.url={frame.url[:90]} "
@@ -210,6 +219,11 @@ async def check_availability():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 800, "height": 2400})
+        page.on("console", lambda m: DIAG_LOG.append(f"console.{m.type}: {m.text[:200]}")
+                if m.type in ("error", "warning") else None)
+        page.on("response", lambda r: DIAG_LOG.append(f"HTTP {r.status} {r.url[:110]}")
+                if r.status >= 400 else None)
+        page.on("requestfailed", lambda r: DIAG_LOG.append(f"FAILED {r.url[:110]} {r.failure}"))
 
         try:
             found_slots = {}
