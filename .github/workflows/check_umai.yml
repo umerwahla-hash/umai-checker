@@ -38,6 +38,7 @@ jobs:
       - name: Run Playwright Script
         env:
           # Securely pull credentials from GitHub Secrets
+          PYTHONUNBUFFERED: '1'
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
           SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
         run: python check_rembayung.py
