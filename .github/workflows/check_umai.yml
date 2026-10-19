@@ -1,0 +1,33 @@
+name: Check UMAI Reservations
+
+on:
+  schedule:
+    # Runs at minute 0 past every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-slots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps
+          
+      - name: Run Playwright Script
+        env:
+          # Securely pull credentials from GitHub Secrets
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+        run: python check_rembayung.py
