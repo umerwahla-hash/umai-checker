@@ -9,6 +9,8 @@ on:
 jobs:
   check-slots:
     runs-on: ubuntu-24.04
+    # Leaves room for Cloudflare's waiting room (script waits up to 8 min)
+    timeout-minutes: 20
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -17,6 +19,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Restore alert state
+        # Remembers which slots we already emailed about, so we don't email hourly
+        uses: actions/cache@v4
+        with:
+          path: .umai_state.json
+          key: umai-state-${{ github.run_id }}
+          restore-keys: |
+            umai-state-
 
       - name: Install Dependencies
         run: |
